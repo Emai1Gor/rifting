@@ -10,7 +10,7 @@ interface Props {
 
 export default function RoundTimer({ timerEnd, timerMinutes, onStart, onReset }: Props) {
   const [remaining, setRemaining] = useState<number>(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+  const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
   useEffect(() => {
     if (timerEnd === null) {
