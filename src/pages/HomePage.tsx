@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { QRCodeSVG } from 'qrcode.react';
 import { useAppContext } from '../context/AppContext';
 
 export default function HomePage() {
@@ -67,6 +68,20 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      <div className="mt-12 max-w-3xl mx-auto text-center">
+        <div className="bg-dark-card border border-dark-border rounded-xl p-6 inline-block">
+          <div className="text-sm text-slate-400 mb-3">手機掃描 QR Code 打開</div>
+          <QRCodeSVG
+            value={window.location.origin}
+            size={160}
+            bgColor="transparent"
+            fgColor="#e2e8f0"
+            level="M"
+          />
+          <div className="text-xs text-slate-500 mt-3 break-all">{window.location.origin}</div>
+        </div>
+      </div>
     </div>
   );
 }
