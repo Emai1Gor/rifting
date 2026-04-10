@@ -25,7 +25,7 @@ export default function RoundTimer({ timerEnd, timerMinutes, onStart, onReset }:
 
     tick();
     intervalRef.current = setInterval(tick, 1000);
-    return () => clearInterval(intervalRef.current);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [timerEnd, timerMinutes]);
 
   if (timerMinutes === 0) return null;

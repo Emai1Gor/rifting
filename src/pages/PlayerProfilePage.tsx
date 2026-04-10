@@ -4,7 +4,7 @@ import { useAppContext } from '../context/AppContext';
 import PageShell from '../components/layout/PageShell';
 import PlayerForm from '../components/player/PlayerForm';
 import { AvatarDisplay } from '../components/player/AvatarPicker';
-import type { Match, Tournament } from '../types';
+import type { Tournament } from '../types';
 
 interface MatchRecord {
   tournamentName: string;

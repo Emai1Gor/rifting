@@ -1,11 +1,13 @@
 // Unique SVG hero icons for each Riftbound TCG character
 // Each icon has a distinct silhouette/symbol on a colored gradient background
 
+import type { ReactNode } from 'react';
+
 interface IconProps {
   className?: string;
 }
 
-type HeroIcon = (props: IconProps) => JSX.Element;
+type HeroIcon = (props: IconProps) => ReactNode;
 
 // Aelara - Arcane sorceress (crescent moon + stars)
 const Aelara: HeroIcon = ({ className }) => (

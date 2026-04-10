@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useEffect, useRef, type ReactNode } from 'react';
-import type { AppState, Player, Tournament, FriendlyMatch, Match } from '../types';
+import type { AppState, Player, Tournament, FriendlyMatch } from '../types';
 import { loadState, saveState } from '../lib/storage';
 
 // --- Actions ---
@@ -66,12 +66,12 @@ const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, null, loadState);
-  const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const saveTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
-    clearTimeout(saveTimeout.current);
+    if (saveTimeout.current) clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(() => saveState(state), 300);
-    return () => clearTimeout(saveTimeout.current);
+    return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current); };
   }, [state]);
 
   return (
