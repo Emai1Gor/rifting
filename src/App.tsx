@@ -8,6 +8,7 @@ import TournamentPage from './pages/TournamentPage';
 import FriendlyMatchPage from './pages/FriendlyMatchPage';
 import PlayerListPage from './pages/PlayerListPage';
 import PlayerProfilePage from './pages/PlayerProfilePage';
+import SyncPage from './pages/SyncPage';
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/friendly" element={<FriendlyMatchPage />} />
           <Route path="/players" element={<PlayerListPage />} />
           <Route path="/players/:id" element={<PlayerProfilePage />} />
+          <Route path="/sync" element={<SyncPage />} />
         </Routes>
       </BrowserRouter>
     </AppProvider>
