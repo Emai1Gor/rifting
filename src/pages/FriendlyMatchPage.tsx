@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import PageShell from '../components/layout/PageShell';
 import type { MatchFormat } from '../types';
 import { getWinsNeeded } from '../lib/utils';
@@ -8,6 +8,105 @@ interface GameResult {
 }
 
 type Phase = 'setup' | 'playing' | 'done';
+
+function DiceRoll({ p1Name, p2Name }: { p1Name: string; p2Name: string }) {
+  const [rolling, setRolling] = useState(false);
+  const [highlight, setHighlight] = useState<'p1' | 'p2' | null>(null);
+  const [winner, setWinner] = useState<'p1' | 'p2' | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const handleRoll = () => {
+    if (rolling) return;
+    setRolling(true);
+    setWinner(null);
+
+    let count = 0;
+    const totalFlashes = 12 + Math.floor(Math.random() * 6); // 12-17 flashes
+    let speed = 80;
+
+    const flash = () => {
+      setHighlight(prev => prev === 'p1' ? 'p2' : 'p1');
+      count++;
+
+      if (count >= totalFlashes) {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        const result: 'p1' | 'p2' = Math.random() < 0.5 ? 'p1' : 'p2';
+        setHighlight(result);
+        setWinner(result);
+        setRolling(false);
+        return;
+      }
+
+      // Slow down near the end
+      if (count > totalFlashes - 5) {
+        speed += 60;
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        intervalRef.current = setInterval(flash, speed);
+      }
+    };
+
+    intervalRef.current = setInterval(flash, speed);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  return (
+    <div className="bg-dark-card border border-dark-border rounded-xl p-4">
+      <div className="flex items-center gap-3">
+        {/* P1 */}
+        <div className={`flex-1 py-3 rounded-lg text-center text-sm font-semibold transition-all duration-100 ${
+          highlight === 'p1'
+            ? winner === 'p1'
+              ? 'bg-accent/30 text-accent-light border-2 border-accent shadow-[0_0_16px_rgba(99,102,241,0.5)]'
+              : 'bg-accent/20 text-accent-light border border-accent/50'
+            : 'bg-dark-surface text-slate-400 border border-transparent'
+        }`}>
+          {p1Name}
+          {winner === 'p1' && <div className="text-xs mt-1 text-accent">Goes First!</div>}
+        </div>
+
+        {/* Dice Button */}
+        <button
+          onClick={handleRoll}
+          disabled={rolling}
+          className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl transition-all shrink-0 ${
+            rolling
+              ? 'bg-accent/20 animate-pulse cursor-wait'
+              : 'bg-dark-surface hover:bg-accent/20 hover:text-accent-light cursor-pointer'
+          }`}
+          title="Roll for first turn"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="2" width="20" height="20" rx="3" />
+            <circle cx="8" cy="8" r="1.5" fill="currentColor" />
+            <circle cx="16" cy="8" r="1.5" fill="currentColor" />
+            <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+            <circle cx="8" cy="16" r="1.5" fill="currentColor" />
+            <circle cx="16" cy="16" r="1.5" fill="currentColor" />
+          </svg>
+        </button>
+
+        {/* P2 */}
+        <div className={`flex-1 py-3 rounded-lg text-center text-sm font-semibold transition-all duration-100 ${
+          highlight === 'p2'
+            ? winner === 'p2'
+              ? 'bg-accent/30 text-accent-light border-2 border-accent shadow-[0_0_16px_rgba(99,102,241,0.5)]'
+              : 'bg-accent/20 text-accent-light border border-accent/50'
+            : 'bg-dark-surface text-slate-400 border border-transparent'
+        }`}>
+          {p2Name}
+          {winner === 'p2' && <div className="text-xs mt-1 text-accent">Goes First!</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function FriendlyMatchPage() {
   const [phase, setPhase] = useState<Phase>('setup');
@@ -124,6 +223,9 @@ export default function FriendlyMatchPage() {
     return (
       <PageShell title="Practice Match">
         <div className="max-w-lg mx-auto space-y-4">
+          {/* Dice Roll */}
+          <DiceRoll p1Name={p1Name} p2Name={p2Name} />
+
           {/* Score Header */}
           {!isBo1 && (
             <div className="text-center">
@@ -276,7 +378,11 @@ export default function FriendlyMatchPage() {
   }
 
   // --- Done Phase ---
-  const winner = p1Wins > p2Wins ? p1Name : p2Wins > p1Wins ? p2Name : null;
+  // BO1 uses point scores, BOx uses game wins
+  const isBo1 = format === 'BO1';
+  const bo1Winner = p1Score > p2Score ? p1Name : p2Score > p1Score ? p2Name : null;
+  const boxWinner = p1Wins > p2Wins ? p1Name : p2Wins > p1Wins ? p2Name : null;
+  const matchWinner = isBo1 ? bo1Winner : boxWinner;
 
   return (
     <PageShell title="Practice Match">
@@ -284,11 +390,11 @@ export default function FriendlyMatchPage() {
         <div className="bg-dark-card border border-dark-border rounded-xl p-6 text-center space-y-4">
           <div className="text-xs text-slate-400 uppercase">Match Result</div>
 
-          {winner ? (
+          {matchWinner ? (
             <div>
-              <div className="text-3xl font-bold text-win mb-1">{winner} Wins!</div>
+              <div className="text-3xl font-bold text-win mb-1">{matchWinner} Wins!</div>
               <div className="text-slate-400">
-                {format === 'BO1'
+                {isBo1
                   ? `${p1Score} - ${p2Score}`
                   : `${p1Wins} - ${p2Wins}${draws > 0 ? ` (${draws} draw${draws > 1 ? 's' : ''})` : ''}`
                 }
@@ -298,13 +404,13 @@ export default function FriendlyMatchPage() {
             <div>
               <div className="text-3xl font-bold text-draw mb-1">Draw!</div>
               <div className="text-slate-400">
-                {format === 'BO1' ? `${p1Score} - ${p2Score}` : `${p1Wins} - ${p2Wins}`}
+                {isBo1 ? `${p1Score} - ${p2Score}` : `${p1Wins} - ${p2Wins}`}
               </div>
             </div>
           )}
 
           {/* Game-by-game history for BOx */}
-          {games.length > 0 && format !== 'BO1' && (
+          {games.length > 0 && !isBo1 && (
             <div className="pt-4 border-t border-dark-border">
               <div className="space-y-1">
                 {games.map((g, i) => (
