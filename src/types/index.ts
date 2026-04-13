@@ -61,6 +61,8 @@ export interface PlayerStanding {
   losses: number;
   draws: number;
   omw: number;
+  gwp: number;   // Game Win Percentage
+  ogw: number;   // Opponent Game Win Percentage
   rank: number;
 }
 

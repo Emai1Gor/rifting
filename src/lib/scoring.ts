@@ -27,6 +27,9 @@ export function computeStandings(tournament: Tournament): PlayerStanding[] {
     losses: number;
     draws: number;
     opponents: PlayerId[];
+    gameWins: number;
+    gameLosses: number;
+    gameDraws: number;
   }>();
 
   // Initialize all players
@@ -38,6 +41,9 @@ export function computeStandings(tournament: Tournament): PlayerStanding[] {
       losses: 0,
       draws: 0,
       opponents: [],
+      gameWins: 0,
+      gameLosses: 0,
+      gameDraws: 0,
     });
   }
 
@@ -55,6 +61,9 @@ export function computeStandings(tournament: Tournament): PlayerStanding[] {
         else if (result === 'draw') { p1Stats.matchPoints += 1; p1Stats.draws++; }
         else if (result === 'loss') { p1Stats.losses++; }
         p1Stats.matchesPlayed++;
+        p1Stats.gameWins += match.player1Wins;
+        p1Stats.gameLosses += match.player2Wins;
+        p1Stats.gameDraws += match.draws;
         if (match.player2Id) p1Stats.opponents.push(match.player2Id);
       }
 
@@ -67,16 +76,27 @@ export function computeStandings(tournament: Tournament): PlayerStanding[] {
           else if (result === 'draw') { p2Stats.matchPoints += 1; p2Stats.draws++; }
           else if (result === 'loss') { p2Stats.losses++; }
           p2Stats.matchesPlayed++;
+          p2Stats.gameWins += match.player2Wins;
+          p2Stats.gameLosses += match.player1Wins;
+          p2Stats.gameDraws += match.draws;
           p2Stats.opponents.push(match.player1Id);
         }
       }
     }
   }
 
-  // Compute OMW (Opponent Match Win %)
+  // Helper: compute GWP for a player
+  const getGWP = (stats: { gameWins: number; gameLosses: number; gameDraws: number }) => {
+    const totalGames = stats.gameWins + stats.gameLosses + stats.gameDraws;
+    if (totalGames === 0) return 0.33;
+    return Math.max((stats.gameWins + stats.gameDraws * 0.5) / totalGames, 0.33);
+  };
+
+  // Compute OMW, GWP, OGW
   const standings: PlayerStanding[] = [];
   for (const [playerId, stats] of statsMap) {
     let omw = 0;
+    let ogw = 0;
     if (stats.opponents.length > 0) {
       const oppMWPs = stats.opponents.map(oppId => {
         const oppStats = statsMap.get(oppId);
@@ -84,7 +104,16 @@ export function computeStandings(tournament: Tournament): PlayerStanding[] {
         return Math.max(oppStats.matchPoints / (oppStats.matchesPlayed * 3), 0.33);
       });
       omw = oppMWPs.reduce((sum, v) => sum + v, 0) / oppMWPs.length;
+
+      const oppGWPs = stats.opponents.map(oppId => {
+        const oppStats = statsMap.get(oppId);
+        if (!oppStats) return 0.33;
+        return getGWP(oppStats);
+      });
+      ogw = oppGWPs.reduce((sum, v) => sum + v, 0) / oppGWPs.length;
     }
+
+    const gwp = getGWP(stats);
 
     standings.push({
       playerId,
@@ -94,6 +123,8 @@ export function computeStandings(tournament: Tournament): PlayerStanding[] {
       losses: stats.losses,
       draws: stats.draws,
       omw,
+      gwp,
+      ogw,
       rank: 0,
     });
   }

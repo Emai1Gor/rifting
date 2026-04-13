@@ -140,14 +140,23 @@ export default function MatchResultInput({ match, players, format, onUpdate }: P
       </div>
 
       {isComplete && (
-        <div className="text-center text-xs text-slate-500 mt-2">
-          {match.player1Wins > match.player2Wins
-            ? `${p1?.name} wins`
-            : match.player2Wins > match.player1Wins
-            ? `${p2?.name} wins`
-            : 'Draw'}
-          {' '}&middot; {match.player1Wins}-{match.player2Wins}
-          {match.draws > 0 && `-${match.draws}`}
+        <div className="flex items-center justify-center gap-3 mt-2">
+          <span className="text-xs text-slate-500">
+            {match.player1Wins > match.player2Wins
+              ? `${p1?.name} wins`
+              : match.player2Wins > match.player1Wins
+              ? `${p2?.name} wins`
+              : 'Draw'}
+            {' '}&middot; {match.player1Wins}-{match.player2Wins}
+            {match.draws > 0 && `-${match.draws}`}
+          </span>
+          <button
+            onClick={() => onUpdate(match.id, 0, 0, 0)}
+            className="text-xs text-slate-600 hover:text-draw transition-colors"
+            title="Reset result"
+          >
+            Undo
+          </button>
         </div>
       )}
     </div>

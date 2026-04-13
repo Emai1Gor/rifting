@@ -20,7 +20,9 @@ export default function StandingsTable({ standings, players }: Props) {
             <th className="px-1.5 py-2.5 text-center w-8">L</th>
             <th className="px-1.5 py-2.5 text-center w-8">D</th>
             <th className="px-1.5 py-2.5 text-center w-10">Pts</th>
-            <th className="px-1.5 py-2.5 text-center w-14">OMW</th>
+            <th className="px-1.5 py-2.5 text-center w-12">OMW</th>
+            <th className="px-1.5 py-2.5 text-center w-12">GW</th>
+            <th className="px-1.5 py-2.5 text-center w-12">OGW</th>
           </tr>
         </thead>
         <tbody>
@@ -50,6 +52,12 @@ export default function StandingsTable({ standings, players }: Props) {
                 <td className="px-1.5 py-2 text-center text-white font-bold text-xs">{s.matchPoints}</td>
                 <td className="px-1.5 py-2 text-center text-slate-400 text-xs">
                   {(s.omw * 100).toFixed(0)}%
+                </td>
+                <td className="px-1.5 py-2 text-center text-slate-400 text-xs">
+                  {(s.gwp * 100).toFixed(0)}%
+                </td>
+                <td className="px-1.5 py-2 text-center text-slate-400 text-xs">
+                  {(s.ogw * 100).toFixed(0)}%
                 </td>
               </tr>
             );

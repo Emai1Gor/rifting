@@ -17,6 +17,7 @@ export default function TournamentPage() {
   const { state, dispatch } = useAppContext();
   const [showPairingEditor, setShowPairingEditor] = useState(false);
   const [pendingMatches, setPendingMatches] = useState<Match[] | null>(null);
+  const [editingRound, setEditingRound] = useState<number | null>(null);
 
   const tournament = state.tournaments.find(t => t.id === id);
   if (!tournament) {
@@ -120,6 +121,27 @@ export default function TournamentPage() {
     if (!currentRound) return;
     const updatedRounds = tournament.rounds.map((r, i) =>
       i === tournament.currentRound ? { ...r, timerEnd: null } : r
+    );
+    dispatch({ type: 'UPDATE_TOURNAMENT', tournament: { ...tournament, rounds: updatedRounds } });
+  };
+
+  const handleUpdatePastMatchResult = (roundIndex: number, matchId: string, p1Wins: number, p2Wins: number, draws: number) => {
+    const round = tournament.rounds[roundIndex];
+    if (!round) return;
+
+    const updatedMatches = round.matches.map(m => {
+      if (m.id !== matchId) return m;
+      let status = m.status;
+      if (boNum === 1) {
+        status = (p1Wins > 0 || p2Wins > 0 || draws > 0) ? 'complete' : 'pending';
+      } else {
+        status = (p1Wins >= winsNeeded || p2Wins >= winsNeeded) ? 'complete' : 'pending';
+      }
+      return { ...m, player1Wins: p1Wins, player2Wins: p2Wins, draws, status };
+    });
+
+    const updatedRounds = tournament.rounds.map((r, i) =>
+      i === roundIndex ? { ...r, matches: updatedMatches } : r
     );
     dispatch({ type: 'UPDATE_TOURNAMENT', tournament: { ...tournament, rounds: updatedRounds } });
   };
@@ -242,31 +264,58 @@ export default function TournamentPage() {
               <h2 className="text-sm font-semibold text-slate-400 uppercase mb-3">Previous Rounds</h2>
               <div className="space-y-4">
                 {tournament.rounds
-                  .filter((_, i) => i !== tournament.currentRound || isComplete)
-                  .map(round => (
-                    <div key={round.roundNumber} className="bg-dark-surface border border-dark-border rounded-lg p-3">
-                      <h3 className="text-xs text-slate-400 font-medium mb-2">Round {round.roundNumber}</h3>
-                      <div className="space-y-1">
-                        {round.matches.map(match => {
-                          const p1 = players.find(p => p.id === match.player1Id);
-                          const p2 = match.player2Id ? players.find(p => p.id === match.player2Id) : null;
-                          return (
-                            <div key={match.id} className="flex items-center justify-between text-sm">
-                              <span className={match.player1Wins > match.player2Wins ? 'text-win' : 'text-white'}>
-                                {p1?.name}
-                              </span>
-                              <span className="text-slate-500 text-xs mx-2">
-                                {p2 ? `${match.player1Wins}-${match.player2Wins}` : 'BYE'}
-                              </span>
-                              <span className={!p2 ? 'text-yellow-400' : match.player2Wins > match.player1Wins ? 'text-win' : 'text-white'}>
-                                {p2?.name ?? 'BYE'}
-                              </span>
-                            </div>
-                          );
-                        })}
+                  .map((round, idx) => ({ round, idx }))
+                  .filter(({ idx }) => idx !== tournament.currentRound || isComplete)
+                  .map(({ round, idx }) => {
+                    const isEditing = editingRound === idx;
+                    return (
+                      <div key={round.roundNumber} className="bg-dark-surface border border-dark-border rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-xs text-slate-400 font-medium">Round {round.roundNumber}</h3>
+                          <button
+                            onClick={() => setEditingRound(isEditing ? null : idx)}
+                            className="text-xs text-slate-500 hover:text-accent-light transition-colors"
+                          >
+                            {isEditing ? 'Done' : 'Edit'}
+                          </button>
+                        </div>
+
+                        {isEditing ? (
+                          <div className="space-y-3">
+                            {round.matches.map(match => (
+                              <MatchResultInput
+                                key={match.id}
+                                match={match}
+                                players={players}
+                                format={tournament.format}
+                                onUpdate={(matchId, p1w, p2w, d) => handleUpdatePastMatchResult(idx, matchId, p1w, p2w, d)}
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="space-y-1">
+                            {round.matches.map(match => {
+                              const p1 = players.find(p => p.id === match.player1Id);
+                              const p2 = match.player2Id ? players.find(p => p.id === match.player2Id) : null;
+                              return (
+                                <div key={match.id} className="flex items-center justify-between text-sm">
+                                  <span className={match.player1Wins > match.player2Wins ? 'text-win' : 'text-white'}>
+                                    {p1?.name}
+                                  </span>
+                                  <span className="text-slate-500 text-xs mx-2">
+                                    {p2 ? `${match.player1Wins}-${match.player2Wins}` : 'BYE'}
+                                  </span>
+                                  <span className={!p2 ? 'text-yellow-400' : match.player2Wins > match.player1Wins ? 'text-win' : 'text-white'}>
+                                    {p2?.name ?? 'BYE'}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
               </div>
             </div>
           )}
