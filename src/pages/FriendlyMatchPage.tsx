@@ -5,6 +5,8 @@ import { getWinsNeeded } from '../lib/utils';
 
 interface GameResult {
   winner: 'p1' | 'p2' | 'draw';
+  p1Score: number;
+  p2Score: number;
 }
 
 type Phase = 'setup' | 'playing' | 'done';
@@ -130,9 +132,12 @@ export default function FriendlyMatchPage() {
     setPhase('playing');
   };
 
-  const handleGameResult = (winner: 'p1' | 'p2' | 'draw') => {
-    const newGames = [...games, { winner }];
+  const handleConfirmGame = () => {
+    const winner: 'p1' | 'p2' | 'draw' = p1Score > p2Score ? 'p1' : p2Score > p1Score ? 'p2' : 'draw';
+    const newGames: GameResult[] = [...games, { winner, p1Score, p2Score }];
     setGames(newGames);
+    setP1Score(0);
+    setP2Score(0);
 
     const newP1Wins = newGames.filter(g => g.winner === 'p1').length;
     const newP2Wins = newGames.filter(g => g.winner === 'p2').length;
@@ -316,52 +321,75 @@ export default function FriendlyMatchPage() {
                 </div>
               </>
             ) : (
-              /* BO3/BO5: Game-by-game */
+              /* BO3/BO5: Score tracker per game */
               <>
-                <div className="text-center text-sm text-slate-400 mb-4">
-                  Who won Game {currentGame}?
+                <div className="text-center text-xs text-slate-400 uppercase mb-4">
+                  Game {currentGame} Score
                 </div>
-                <div className="space-y-3">
-                  <button
-                    onClick={() => handleGameResult('p1')}
-                    className="w-full bg-dark-surface hover:bg-win/20 hover:border-win/50 border border-dark-border text-white py-4 rounded-lg font-semibold text-lg transition-colors"
-                  >
-                    {p1Name} Wins
-                  </button>
-                  <button
-                    onClick={() => handleGameResult('p2')}
-                    className="w-full bg-dark-surface hover:bg-win/20 hover:border-win/50 border border-dark-border text-white py-4 rounded-lg font-semibold text-lg transition-colors"
-                  >
-                    {p2Name} Wins
-                  </button>
-                  <button
-                    onClick={() => handleGameResult('draw')}
-                    className="w-full bg-dark-surface hover:bg-draw/10 hover:border-draw/50 border border-dark-border text-slate-400 py-3 rounded-lg text-sm transition-colors"
-                  >
-                    Draw
-                  </button>
-                </div>
-
-                {/* Game History */}
-                {games.length > 0 && (
-                  <div className="mt-5 pt-4 border-t border-dark-border">
-                    <div className="text-xs text-slate-400 mb-2">Game History</div>
-                    <div className="space-y-1">
-                      {games.map((g, i) => (
-                        <div key={i} className="flex justify-between text-sm">
-                          <span className="text-slate-400">Game {i + 1}</span>
-                          <span className={
-                            g.winner === 'p1' ? 'text-win' : g.winner === 'p2' ? 'text-loss' : 'text-draw'
-                          }>
-                            {g.winner === 'p1' ? p1Name : g.winner === 'p2' ? p2Name : 'Draw'}
-                          </span>
-                        </div>
-                      ))}
+                <div className="flex items-stretch gap-4">
+                  <div className="flex-1 text-center">
+                    <div className="text-sm text-slate-400 mb-2">{p1Name}</div>
+                    <div
+                      className="text-7xl font-bold text-white mb-4 tabular-nums cursor-pointer select-none"
+                      onClick={() => setP1Score(p1Score + 1)}
+                    >
+                      {p1Score}
+                    </div>
+                    <div className="flex gap-2 justify-center">
+                      <button
+                        onClick={() => setP1Score(Math.max(0, p1Score - 1))}
+                        className="w-12 h-12 rounded-xl bg-dark-surface text-slate-300 hover:bg-loss/20 hover:text-loss flex items-center justify-center text-2xl font-bold transition-colors"
+                      >
+                        -
+                      </button>
+                      <button
+                        onClick={() => setP1Score(p1Score + 1)}
+                        className="w-12 h-12 rounded-xl bg-dark-surface text-slate-300 hover:bg-win/20 hover:text-win flex items-center justify-center text-2xl font-bold transition-colors"
+                      >
+                        +
+                      </button>
                     </div>
                   </div>
-                )}
 
-                <div className="mt-4 pt-4 border-t border-dark-border text-center">
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="w-px h-full bg-dark-border"></div>
+                    <span className="text-slate-500 text-sm font-bold py-2">VS</span>
+                    <div className="w-px h-full bg-dark-border"></div>
+                  </div>
+
+                  <div className="flex-1 text-center">
+                    <div className="text-sm text-slate-400 mb-2">{p2Name}</div>
+                    <div
+                      className="text-7xl font-bold text-white mb-4 tabular-nums cursor-pointer select-none"
+                      onClick={() => setP2Score(p2Score + 1)}
+                    >
+                      {p2Score}
+                    </div>
+                    <div className="flex gap-2 justify-center">
+                      <button
+                        onClick={() => setP2Score(Math.max(0, p2Score - 1))}
+                        className="w-12 h-12 rounded-xl bg-dark-surface text-slate-300 hover:bg-loss/20 hover:text-loss flex items-center justify-center text-2xl font-bold transition-colors"
+                      >
+                        -
+                      </button>
+                      <button
+                        onClick={() => setP2Score(p2Score + 1)}
+                        className="w-12 h-12 rounded-xl bg-dark-surface text-slate-300 hover:bg-win/20 hover:text-win flex items-center justify-center text-2xl font-bold transition-colors"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-dark-border flex flex-col items-center gap-3">
+                  <button
+                    onClick={handleConfirmGame}
+                    disabled={p1Score === 0 && p2Score === 0}
+                    className="bg-accent hover:bg-accent/80 text-black px-8 py-2.5 rounded-lg font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    Confirm Game {currentGame}
+                  </button>
                   <button
                     onClick={handleEndMatch}
                     className="text-slate-500 hover:text-slate-300 text-xs transition-colors"
@@ -369,6 +397,26 @@ export default function FriendlyMatchPage() {
                     End Match Early
                   </button>
                 </div>
+
+                {/* Game History */}
+                {games.length > 0 && (
+                  <div className="mt-5 pt-4 border-t border-dark-border">
+                    <div className="text-xs text-slate-400 mb-2">Game History</div>
+                    <div className="space-y-1.5">
+                      {games.map((g, i) => (
+                        <div key={i} className="flex justify-between text-sm items-center">
+                          <span className="text-slate-400">Game {i + 1}</span>
+                          <span className="text-slate-300 font-mono">{g.p1Score} - {g.p2Score}</span>
+                          <span className={`text-xs font-medium ${
+                            g.winner === 'p1' ? 'text-win' : g.winner === 'p2' ? 'text-loss' : 'text-draw'
+                          }`}>
+                            {g.winner === 'p1' ? p1Name : g.winner === 'p2' ? p2Name : 'Draw'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -412,13 +460,14 @@ export default function FriendlyMatchPage() {
           {/* Game-by-game history for BOx */}
           {games.length > 0 && !isBo1 && (
             <div className="pt-4 border-t border-dark-border">
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {games.map((g, i) => (
-                  <div key={i} className="flex justify-between text-sm">
+                  <div key={i} className="flex justify-between text-sm items-center">
                     <span className="text-slate-400">Game {i + 1}</span>
-                    <span className={
+                    <span className="text-slate-300 font-mono">{g.p1Score} - {g.p2Score}</span>
+                    <span className={`text-xs font-medium ${
                       g.winner === 'p1' ? 'text-win' : g.winner === 'p2' ? 'text-loss' : 'text-draw'
-                    }>
+                    }`}>
                       {g.winner === 'p1' ? p1Name : g.winner === 'p2' ? p2Name : 'Draw'}
                     </span>
                   </div>
