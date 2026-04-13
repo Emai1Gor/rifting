@@ -10,52 +10,73 @@ interface GameResult {
 
 type Phase = 'setup' | 'playing' | 'done';
 
-function DiceRollCompact({ p1Name, p2Name }: { p1Name: string; p2Name: string }) {
-  const [rolling, setRolling] = useState(false);
-  const [winner, setWinner] = useState<'p1' | 'p2' | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+interface DiceState {
+  highlight: 'p1' | 'p2' | null;
+  winner: 'p1' | 'p2' | null;
+  rolling: boolean;
+}
 
-  const handleRoll = () => {
-    if (rolling) return;
-    setRolling(true);
-    setWinner(null);
+function useDiceRoll(): [DiceState, () => void] {
+  const [state, setState] = useState<DiceState>({ highlight: null, winner: null, rolling: false });
+  const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
-    const delay = 800 + Math.floor(Math.random() * 400);
-    timeoutRef.current = setTimeout(() => {
-      const result: 'p1' | 'p2' = Math.random() < 0.5 ? 'p1' : 'p2';
-      setWinner(result);
-      setRolling(false);
-    }, delay);
+  const roll = () => {
+    if (state.rolling) return;
+    setState({ highlight: null, winner: null, rolling: true });
+
+    let count = 0;
+    const totalFlashes = 12 + Math.floor(Math.random() * 6);
+    let speed = 80;
+
+    const flash = () => {
+      setState(prev => {
+        const next = prev.highlight === 'p1' ? 'p2' : 'p1' as const;
+        count++;
+
+        if (count >= totalFlashes) {
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          const result: 'p1' | 'p2' = Math.random() < 0.5 ? 'p1' : 'p2';
+          return { highlight: result, winner: result, rolling: false };
+        }
+
+        if (count > totalFlashes - 5) {
+          speed += 60;
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          intervalRef.current = setInterval(flash, speed);
+        }
+
+        return { ...prev, highlight: next };
+      });
+    };
+
+    intervalRef.current = setInterval(flash, speed);
   };
 
   useEffect(() => {
-    return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, []);
 
+  return [state, roll];
+}
+
+function DiceButton({ rolling, onRoll }: { rolling: boolean; onRoll: () => void }) {
   return (
-    <div className="flex items-center gap-2">
-      <button
-        onClick={handleRoll}
-        disabled={rolling}
-        className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all shrink-0 ${
-          rolling ? 'bg-accent/20 animate-pulse' : 'bg-dark-surface hover:bg-accent/20 text-slate-400 hover:text-accent-light'
-        }`}
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="2" y="2" width="20" height="20" rx="3" />
-          <circle cx="8" cy="8" r="1.5" fill="currentColor" />
-          <circle cx="16" cy="8" r="1.5" fill="currentColor" />
-          <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-          <circle cx="8" cy="16" r="1.5" fill="currentColor" />
-          <circle cx="16" cy="16" r="1.5" fill="currentColor" />
-        </svg>
-      </button>
-      {winner && (
-        <span className="text-accent text-xs font-medium animate-pulse">
-          {winner === 'p1' ? p1Name : p2Name} first!
-        </span>
-      )}
-    </div>
+    <button
+      onClick={onRoll}
+      disabled={rolling}
+      className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all shrink-0 ${
+        rolling ? 'bg-accent/20 animate-pulse' : 'bg-dark-surface hover:bg-accent/20 text-slate-400 hover:text-accent-light'
+      }`}
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="2" width="20" height="20" rx="3" />
+        <circle cx="8" cy="8" r="1.5" fill="currentColor" />
+        <circle cx="16" cy="8" r="1.5" fill="currentColor" />
+        <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+        <circle cx="8" cy="16" r="1.5" fill="currentColor" />
+        <circle cx="16" cy="16" r="1.5" fill="currentColor" />
+      </svg>
+    </button>
   );
 }
 
@@ -74,6 +95,7 @@ export default function FriendlyMatchPage() {
   const p2Wins = games.filter(g => g.winner === 'p2').length;
   const draws = games.filter(g => g.winner === 'draw').length;
   const isBo1 = format === 'BO1';
+  const [dice, rollDice] = useDiceRoll();
 
   const handleStart = () => {
     setGames([]);
@@ -180,7 +202,13 @@ export default function FriendlyMatchPage() {
       <div className="fixed inset-0 bg-dark-bg flex flex-col z-50">
         {/* Player 2 (top half, rotated 180°) */}
         <div
-          className="flex-1 flex flex-col items-center justify-center p-4 rotate-180 border-b-0"
+          className={`flex-1 flex flex-col items-center justify-center p-4 rotate-180 border-b-0 transition-all duration-100 ${
+            dice.highlight === 'p2'
+              ? dice.winner === 'p2'
+                ? 'ring-4 ring-accent shadow-[inset_0_0_40px_rgba(99,102,241,0.3)]'
+                : 'ring-2 ring-accent/50'
+              : ''
+          }`}
           style={{ minHeight: 0 }}
         >
           <div className="text-sm text-slate-400 mb-1">{p2Name}</div>
@@ -211,7 +239,14 @@ export default function FriendlyMatchPage() {
 
         {/* Center bar */}
         <div className="shrink-0 bg-dark-surface border-y border-dark-border px-4 py-2 flex items-center justify-between gap-2">
-          <DiceRollCompact p1Name={p1Name} p2Name={p2Name} />
+          <div className="flex items-center gap-2">
+            <DiceButton rolling={dice.rolling} onRoll={rollDice} />
+            {dice.winner && (
+              <span className="text-accent text-xs font-medium animate-pulse">
+                {dice.winner === 'p1' ? p1Name : p2Name} first!
+              </span>
+            )}
+          </div>
 
           <div className="flex items-center gap-3 text-center">
             {!isBo1 && (
@@ -248,7 +283,13 @@ export default function FriendlyMatchPage() {
 
         {/* Player 1 (bottom half, normal orientation) */}
         <div
-          className="flex-1 flex flex-col items-center justify-center p-4"
+          className={`flex-1 flex flex-col items-center justify-center p-4 transition-all duration-100 ${
+            dice.highlight === 'p1'
+              ? dice.winner === 'p1'
+                ? 'ring-4 ring-accent shadow-[inset_0_0_40px_rgba(99,102,241,0.3)]'
+                : 'ring-2 ring-accent/50'
+              : ''
+          }`}
           style={{ minHeight: 0 }}
         >
           <div className="text-sm text-slate-400 mb-1">{p1Name}</div>
