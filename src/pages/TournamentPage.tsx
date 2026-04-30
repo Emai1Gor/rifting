@@ -79,8 +79,8 @@ export default function TournamentPage() {
         // BO1: any result submitted = complete
         status = (p1Wins > 0 || p2Wins > 0 || draws > 0) ? 'complete' : 'pending';
       } else {
-        // BOx: one player reaches winsNeeded, or it's a draw scenario
-        status = (p1Wins >= winsNeeded || p2Wins >= winsNeeded) ? 'complete' : 'pending';
+        // BOx: one player reaches winsNeeded, or submitted as draw
+        status = (p1Wins >= winsNeeded || p2Wins >= winsNeeded || draws > 0) ? 'complete' : 'pending';
       }
 
       return { ...m, player1Wins: p1Wins, player2Wins: p2Wins, draws, status };
@@ -135,7 +135,7 @@ export default function TournamentPage() {
       if (boNum === 1) {
         status = (p1Wins > 0 || p2Wins > 0 || draws > 0) ? 'complete' : 'pending';
       } else {
-        status = (p1Wins >= winsNeeded || p2Wins >= winsNeeded) ? 'complete' : 'pending';
+        status = (p1Wins >= winsNeeded || p2Wins >= winsNeeded || draws > 0) ? 'complete' : 'pending';
       }
       return { ...m, player1Wins: p1Wins, player2Wins: p2Wins, draws, status };
     });

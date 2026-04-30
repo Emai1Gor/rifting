@@ -263,6 +263,14 @@ export default function FriendlyMatchPage() {
           </div>
 
           <div className="flex gap-2">
+            <button
+              onClick={() => { setP1Score(0); setP2Score(0); }}
+              disabled={p1Score === 0 && p2Score === 0}
+              className="bg-dark-card hover:bg-dark-border text-slate-400 px-2 py-1.5 rounded-lg text-xs transition-colors disabled:opacity-30"
+              title="Reset scores"
+            >
+              Reset
+            </button>
             {!isBo1 && (
               <button
                 onClick={handleConfirmGame}

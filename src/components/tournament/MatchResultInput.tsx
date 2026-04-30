@@ -97,30 +97,40 @@ export default function MatchResultInput({ match, players, format, onUpdate }: P
             })}
           </div>
         ) : (
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => handleScoreChange('p1', -1)}
-                className="w-7 h-7 rounded bg-dark-surface text-slate-400 hover:bg-dark-border flex items-center justify-center text-sm"
-              >-</button>
-              <span className="w-8 text-center text-white font-bold text-lg">{match.player1Wins}</span>
-              <button
-                onClick={() => handleScoreChange('p1', 1)}
-                className="w-7 h-7 rounded bg-dark-surface text-slate-400 hover:bg-dark-border flex items-center justify-center text-sm"
-              >+</button>
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => handleScoreChange('p1', -1)}
+                  className="w-7 h-7 rounded bg-dark-surface text-slate-400 hover:bg-dark-border flex items-center justify-center text-sm"
+                >-</button>
+                <span className="w-8 text-center text-white font-bold text-lg">{match.player1Wins}</span>
+                <button
+                  onClick={() => handleScoreChange('p1', 1)}
+                  className="w-7 h-7 rounded bg-dark-surface text-slate-400 hover:bg-dark-border flex items-center justify-center text-sm"
+                >+</button>
+              </div>
+              <span className="text-slate-500">-</span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => handleScoreChange('p2', -1)}
+                  className="w-7 h-7 rounded bg-dark-surface text-slate-400 hover:bg-dark-border flex items-center justify-center text-sm"
+                >-</button>
+                <span className="w-8 text-center text-white font-bold text-lg">{match.player2Wins}</span>
+                <button
+                  onClick={() => handleScoreChange('p2', 1)}
+                  className="w-7 h-7 rounded bg-dark-surface text-slate-400 hover:bg-dark-border flex items-center justify-center text-sm"
+                >+</button>
+              </div>
             </div>
-            <span className="text-slate-500">-</span>
-            <div className="flex items-center gap-1">
+            {!isComplete && match.player1Wins === match.player2Wins && match.player1Wins > 0 && (
               <button
-                onClick={() => handleScoreChange('p2', -1)}
-                className="w-7 h-7 rounded bg-dark-surface text-slate-400 hover:bg-dark-border flex items-center justify-center text-sm"
-              >-</button>
-              <span className="w-8 text-center text-white font-bold text-lg">{match.player2Wins}</span>
-              <button
-                onClick={() => handleScoreChange('p2', 1)}
-                className="w-7 h-7 rounded bg-dark-surface text-slate-400 hover:bg-dark-border flex items-center justify-center text-sm"
-              >+</button>
-            </div>
+                onClick={() => onUpdate(match.id, match.player1Wins, match.player2Wins, 1)}
+                className="px-3 py-1 rounded text-xs font-medium bg-draw/20 text-draw hover:bg-draw/30 transition-colors"
+              >
+                Submit as Draw ({match.player1Wins}-{match.player2Wins})
+              </button>
+            )}
           </div>
         )}
 
