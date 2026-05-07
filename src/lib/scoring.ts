@@ -129,10 +129,16 @@ export function computeStandings(tournament: Tournament): PlayerStanding[] {
     });
   }
 
-  // Sort: matchPoints DESC, then OMW DESC
+  // Sort by standard Magic tiebreaker order:
+  // 1. Match Points DESC
+  // 2. OMW% DESC (Opponent Match Win)
+  // 3. GW% DESC (Game Win)
+  // 4. OGW% DESC (Opponent Game Win)
   standings.sort((a, b) => {
     if (b.matchPoints !== a.matchPoints) return b.matchPoints - a.matchPoints;
-    return b.omw - a.omw;
+    if (b.omw !== a.omw) return b.omw - a.omw;
+    if (b.gwp !== a.gwp) return b.gwp - a.gwp;
+    return b.ogw - a.ogw;
   });
 
   // Assign ranks
