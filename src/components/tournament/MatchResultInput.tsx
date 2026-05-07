@@ -6,7 +6,7 @@ interface Props {
   match: Match;
   players: Player[];
   format: MatchFormat;
-  onUpdate: (matchId: string, p1Wins: number, p2Wins: number, draws: number) => void;
+  onUpdate: (matchId: string, p1Wins: number, p2Wins: number, draws: number, forceComplete?: boolean) => void;
 }
 
 export default function MatchResultInput({ match, players, format, onUpdate }: Props) {
@@ -129,6 +129,14 @@ export default function MatchResultInput({ match, players, format, onUpdate }: P
                 className="px-3 py-1 rounded text-xs font-medium bg-draw/20 text-draw hover:bg-draw/30 transition-colors"
               >
                 Submit as Draw ({match.player1Wins}-{match.player2Wins})
+              </button>
+            )}
+            {!isComplete && match.player1Wins !== match.player2Wins && (match.player1Wins > 0 || match.player2Wins > 0) && (
+              <button
+                onClick={() => onUpdate(match.id, match.player1Wins, match.player2Wins, match.draws, true)}
+                className="px-3 py-1 rounded text-xs font-medium bg-win/20 text-win hover:bg-win/30 transition-colors"
+              >
+                Submit as Final ({match.player1Wins}-{match.player2Wins})
               </button>
             )}
           </div>

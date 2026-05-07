@@ -67,7 +67,7 @@ export default function TournamentPage() {
     setPendingMatches(null);
   };
 
-  const handleUpdateMatchResult = (matchId: string, p1Wins: number, p2Wins: number, draws: number) => {
+  const handleUpdateMatchResult = (matchId: string, p1Wins: number, p2Wins: number, draws: number, forceComplete?: boolean) => {
     if (!currentRound) return;
 
     const updatedMatches = currentRound.matches.map(m => {
@@ -75,11 +75,11 @@ export default function TournamentPage() {
 
       // Determine if match is complete
       let status = m.status;
-      if (boNum === 1) {
-        // BO1: any result submitted = complete
+      if (forceComplete) {
+        status = 'complete';
+      } else if (boNum === 1) {
         status = (p1Wins > 0 || p2Wins > 0 || draws > 0) ? 'complete' : 'pending';
       } else {
-        // BOx: one player reaches winsNeeded, or submitted as draw
         status = (p1Wins >= winsNeeded || p2Wins >= winsNeeded || draws > 0) ? 'complete' : 'pending';
       }
 
@@ -125,14 +125,16 @@ export default function TournamentPage() {
     dispatch({ type: 'UPDATE_TOURNAMENT', tournament: { ...tournament, rounds: updatedRounds } });
   };
 
-  const handleUpdatePastMatchResult = (roundIndex: number, matchId: string, p1Wins: number, p2Wins: number, draws: number) => {
+  const handleUpdatePastMatchResult = (roundIndex: number, matchId: string, p1Wins: number, p2Wins: number, draws: number, forceComplete?: boolean) => {
     const round = tournament.rounds[roundIndex];
     if (!round) return;
 
     const updatedMatches = round.matches.map(m => {
       if (m.id !== matchId) return m;
       let status = m.status;
-      if (boNum === 1) {
+      if (forceComplete) {
+        status = 'complete';
+      } else if (boNum === 1) {
         status = (p1Wins > 0 || p2Wins > 0 || draws > 0) ? 'complete' : 'pending';
       } else {
         status = (p1Wins >= winsNeeded || p2Wins >= winsNeeded || draws > 0) ? 'complete' : 'pending';
@@ -288,7 +290,7 @@ export default function TournamentPage() {
                                 match={match}
                                 players={players}
                                 format={tournament.format}
-                                onUpdate={(matchId, p1w, p2w, d) => handleUpdatePastMatchResult(idx, matchId, p1w, p2w, d)}
+                                onUpdate={(matchId, p1w, p2w, d, fc) => handleUpdatePastMatchResult(idx, matchId, p1w, p2w, d, fc)}
                               />
                             ))}
                           </div>
